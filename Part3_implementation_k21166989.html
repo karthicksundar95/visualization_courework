@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+
+  .axis .domain {
+    display: none;
+  }
+    
+  .btn {
+    margin: 5px;
+    display: block;
+    opacity: 0.9;
+    border: 5px hidden;
+    background-color: lightgrey;
+    border-radius: 0%;
+    cursor: pointer;
+    height: 55px;
+    width: 300px;
+    outline: none;
+  }
+  
+  
+  .btn:hover{
+      opacity: 0.9;
+      background-color: #a5aeba;
+  }
+  
+  .test_skill {
+    border: 2px solid red;
+  }
+  
+  span{
+  display: inline-block;
+  width:600px ;
+  height: 200px;
+  padding-top: 80px;
+  padding-left: 50px;
+  }
+  
+  .Q2_dataviz{
+      display: flex;
+  }
+  
+  .container {
+    background-color: #f3efef;
+    padding: 10px;
+    width: 320px;
+    height: 330px;
+    padding-top: 20px;
+    padding-left: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 25px;
+  }
+
+  .q_container{
+    display: inline-flexbox;
+    background-color: #ebe6e6;
+    padding: 5px;
+    width: 1355px;
+    height: 630px;
+    padding-top: 10px;
+    padding-left: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 25px;
+  }
+
+  .r_container{
+    display: inline-flexbox;
+    background-color: #ebe6e6;
+    padding: 5px;
+    width: 1355px;
+    height: 60px;
+    padding-top: 10px;
+    padding-left: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 25px;
+  }
+
+  .logo{ 
+	top:0; 
+	left:0; 
+  margin-top: 20px;
+  margin-left: 20px;
+  margin-right: 5px;
+} 
+  .title{
+    display: flex;
+    margin-right: 80px;
+  }
+</style>
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+
+<div class="title">
+  <div class="logo"> 
+	<img src="https://upload.wikimedia.org/wikipedia/commons/1/14/King%27s_College_London_logo.svg" width="120" height="100">   
+  </div>
+  <h1 align="center">Does students in London are worried about rent payment due to inflation?
+    How well are the Londoners living in rental coping with other financial commitments 
+    and based on the above analysis what would you recommend the prospective students moving into London?</h1 >
+</div>
+
+<br>
+<!-- Create a div where the graph will take place -->
+<div class='q_container'>
+  <h3 align="center">Who is more worried about rent?</h3>
+  <p style="text-align:center;"> <em>(*click on the slices to explore)</em></p>
+  <div id="Q1_dataviz">
+  <!-- <h3 align="center" >Insight: <em>Compared to all other employment types, FULL-TIME STUDENTS are MOST WORRIED about rent</em></h1> -->
+  </div>
+  <h5 align="left"><em>Pre-processing: Employment type data from cost-of-living dataset 
+    is used directly by removing the "others" class since it doesn not contain any data regarding worriness towards rent</em></h5>
+</div>
+
+
+<br>
+<br>
+
+
+<!-- Create a div where the graph will take place -->
+<div class="q_container">
+  <h3 align="center">Is renting a private place a better option?</h1>
+  <div class="Q2_dataviz" id="Q2_dataviz">
+      <span>
+        <div class="container">
+          <button class="btn" id="button2" >Rent default</button>
+          <br>
+          <button class="btn" id="button3" >Bill default</button>
+          <br>
+          <button class="btn" id="button4" >Credit default</button>
+          <br>
+          <button class="btn" id="button1"><i class="fa fa-arrow-right"></i>Overall Inflation effect</button>
+          <br>
+        </div>
+      </span>
+  </div>
+  <h5 align="left"><em>Pre-processing: Data is filtered for only partial and complete defaulters. 
+    People who were able to pay by struggle or comfortably were not required for this analysis since we are focusing on extreme cases</em></h5>
+</div>
+
+<br>
+<br>
+<br>
+<br>  
+<div class="r_container">
+  <h3 align="center">Recommendation:&emsp; Please opt for renting a place by sharing with friends or family to beat the inflation</h3>
+</div>
+
+<script>
+
+    function updateTreemap(clickedOption){
+    // Read data
+    d3.csv('https://raw.githubusercontent.com/karthicksundar95/visualization_courework/main/data_hierarchy_1level.csv', function(data) {
+          svg_t.selectAll(".axis").remove()
+          svg_t.selectAll("rect").remove()
+          svg_t.selectAll("text").remove()
+
+          console.log("!!!!()",data)
+          console.log(data.filter(function (d) { return (d.Identifier == clickedOption)}))
+          var data_filtered = data.filter(function (d) { return (d.Identifier == clickedOption)})
+          console.log("!!!!",data_filtered)
+          // stratify the data: reformatting for d3.js
+          var root = d3.stratify()
+            .id(function(d) { return d.name; })   // Name of the entity (column name is name in csv)
+            .parentId(function(d) { return d.parent; })   // Name of the parent (column name is parent in csv)
+            (data_filtered);
+          
+            root.sum(function(d) { return +d.value })   // Compute the numeric value for each entity
+        
+          var color = d3.scaleOrdinal()
+          .domain(["Very worried", "Fairly worried", "Not very worried","Not at all worried","Dont know"])
+          .range([ "#CC6677", "#CC6677", "#44AA99", "#44AA99", "#44AA99"])
+          // Then d3.treemap computes the position of each element of the hierarchy
+          // The coordinates are added to the root object above
+          d3.treemap()
+            .size([width, height])
+            .padding(4)
+            (root)
+        
+          console.log(root.leaves())
+        
+          // use this information to add rectangles:
+        
+          svg_t
+            .selectAll("rect")
+            .data(root.leaves())
+            .enter()
+            .append("rect")
+              .attr('x', function (d) { return d.x0; })
+              .attr('y', function (d) { return d.y0; })
+              .attr('width', function (d) { return d.x1 - d.x0; })
+              .attr('height', function (d) { return d.y1 - d.y0; })
+              .style("fill", function(d){ return color(d.data.name)} )
+              .style("stroke", "black");
+            // .style("fill", "#69b3a2");
+        
+          // and to add the text labels
+          svg_t
+            .selectAll("text")
+            .data(root.leaves())
+            .enter()
+            .append("text")
+              .attr("x", function(d){ return d.x0+10})    // +10 to adjust position (more right)
+              .attr("y", function(d){ return d.y0+20})    // +20 to adjust position (lower)
+              .text(function(d){ return d.data.name+", "+d.data.value+"%"})
+              .attr("font-size", "15px")
+              .attr("fill", "white")
+    });
+  };
+
+    // DOUGHNUT set the dimensions and margins of the graph
+    var width = 850
+    height = 460
+    margin = 40
+
+    // The radius of the pieplot is half the width or half the height (smallest one). I subtract a bit of margin.
+    var radius = Math.min(width, height) / 2 - margin
+
+    // append the svg object to the div called 'Q1_dataviz'
+    var svg_d = d3.select("#Q1_dataviz")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    // Create dummy data
+    var data = { Full_time_30_plus_hours: 552, Part_time_less_than_30_hours: 173, Full_time_student: 59, Retired: 224, Unemployed_or_not_working: 140 }
+
+    // set the color scale
+    var color = d3.scaleOrdinal()
+      .domain(data)
+      .range(["#117733", "#332288", "#44AA99", "#88CCEE", "#CC6677"])
+
+    // Compute the position of each group on the pie:
+    var pie = d3.pie()
+      .value(function (d) { return d.value; })
+    var data_ready = pie(d3.entries(data))
+    console.log(data_ready)
+    // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+    svg_d
+      .selectAll('whatever')
+      .data(data_ready)
+      .enter()
+      .append('path')
+      .attr('d', d3.arc()
+        .innerRadius(100)         // This is the size of the donut hole
+        .outerRadius(radius)
+      )
+      .attr('fill', function (d) { return (color(d.data.key)) })
+      .attr("stroke", "black")
+      .style("stroke-width", "2px")
+      .style("opacity", 0.7)
+      .on('click', function (d) {
+        var clickedOption = d.data.key
+        updateTreemap(clickedOption)
+        console.log("***", d.data.key)
+      });
+
+    // The arc generator
+    var arc = d3.arc()
+      .innerRadius(radius * 0.5)         // This is the size of the donut hole
+      .outerRadius(radius * 0.8)
+
+    // Another arc that won't be drawn. Just for labels positioning
+    var outerArc = d3.arc()
+      .innerRadius(radius * 0.9)
+      .outerRadius(radius * 0.9)
+    // Add the polylines between chart and labels:
+    svg_d
+      .selectAll('allPolylines')
+      .data(data_ready)
+      .enter()
+      .append('polyline')
+      .attr("stroke", "black")
+      .style("fill", "none")
+      .attr("stroke-width", 1)
+      .attr('points', function (d) {
+        var posA = arc.centroid(d) // line insertion in the slice
+        var posB = outerArc.centroid(d) // line break: we use the other arc generator that has been built only for that
+        var posC = outerArc.centroid(d); // Label position = almost the same as posB
+        var midangle = d.startAngle + (d.endAngle - d.startAngle) / 2 // we need the angle to see if the X position will be at the extreme right or extreme left
+        posC[0] = radius * 0.95 * (midangle < Math.PI ? 1 : -1); // multiply by 1 or -1 to put it on the right or on the left
+        return [posA, posB, posC]
+      })
+
+    // Add the polylines between chart and labels:
+    svg_d
+      .selectAll('allLabels')
+      .data(data_ready)
+      .enter()
+      .append('text')
+      .text(function (d) { console.log(d.data.key); return d.data.key + ", #" + d.data.value })
+      .attr('transform', function (d) {
+        var pos = outerArc.centroid(d);
+        var midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+        pos[0] = radius * 0.99 * (midangle < Math.PI ? 1 : -1);
+        return 'translate(' + pos + ')';
+      })
+      .style('text-anchor', function (d) {
+        var midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+        return (midangle < Math.PI ? 'start' : 'end')
+      })
+
+
+  // TREEMAPset the dimensions and margins of the graph
+  var margin = {top: 10, right: 10, bottom: 10, left: 10},
+    width = 445 - margin.left - margin.right,
+    height = 445 - margin.top - margin.bottom;
+  
+  // append the svg object to the body of the page
+  var svg_t = d3.select("#Q1_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+
+  // BARPLOT    
+  var bar_margin = {top: 10, right: 10, bottom: 10, left: 50}
+  var svg = d3.select("#Q2_dataviz")
+              .append('svg')
+              .attr("width", 820 + margin.left + margin.right)
+              .attr("height", 500 + margin.top + margin.bottom);
+    
+  g = svg.append("g").attr("transform", "translate(" + bar_margin.left + "," + bar_margin.top + ")")
+
+
+  d3.csv("https://raw.githubusercontent.com/karthicksundar95/visualization_courework/updated-files/data_stacked.csv", function(d, i, columns) {
+    for (var i = 2, n = columns.length; i < n; ++i) d[columns[i]] = +d[columns[i]];
+    return d;
+    }, function(error, data) {
+    if (error) throw error;
+    
+    console.log("IN Q2222222") 
+
+    var allGroup = ["Overall Inflation effect","Rent default","Bill default", "Credit default"]
+
+    d3.select("#selectButton")
+      .selectAll('myOptions')
+          .data(allGroup)
+      .enter()
+        .append('option')
+      .text(function (d) { return d; }) // text showed in the menu
+      .attr("value", function (d) { return d; }) // corresponding value returned by the button
+
+    var keys = data.columns.slice(2);
+  
+    update('Overall Inflation effect')
+
+    function update(selectedGroup) {
+        // selectedGroup = "Overall Inflation effect";
+        // console.log(data)
+        // var dataFilter = data.map(function(d){return {State: d.State, value:d[selectedGroup]} })
+        // console.log(dataFilter)
+
+        g.selectAll(".axis").remove()
+        g.selectAll("rect").remove()
+        
+        console.log("data",data) 
+        
+        console.log(data.filter(function (d) { return (d.Group == selectedGroup)}))
+
+        data_filter = data.filter(function (d) { return (d.Group == selectedGroup)})
+
+        console.log("filtered_data",data_filter) 
+
+        // List of subgroups = header of the csv files = soil condition here
+        var subgroups = data.columns.slice(2)
+
+        console.log("subgroups",subgroups) 
+       
+        var stacked_color = d3.scaleOrdinal()
+                          .domain(subgroups)
+                          .range(['#44AA99','#88CCEE','#332288'])
+
+        // List of groups = species here = value of the first column called group -> I show them on the X axis
+        var groups = d3.map(data_filter, function(d){return(d.group)}).keys()
+
+        console.log("groups",groups) 
+        console.log("y_limit",d3.max(data_filter, function(d) { return d3.max(keys, function(key) { return d[key]; }); }))
+
+        // Add X axis
+        var x = d3.scaleBand()
+            .domain(groups)
+            .range([0, width])
+            .padding([0.2])
+        
+        g.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x).tickSizeOuter(0));
+
+        // Add Y axis
+        var y = d3.scaleLinear()
+          .domain([0, 25])
+          .range([ height, 0 ]);
+
+        //y.domain([0, d3.max(data_filter, function(d) { return d3.max(keys, function(key) { return d[key]; }); })+10]).nice();
+        
+        g.append("g")
+          .call(d3.axisLeft(y));
+
+        //stack the data? --> stack per subgroup
+        var stackedData = d3.stack()
+          .keys(subgroups)
+          (data_filter)
+        
+        const tooltip = d3
+            .select("body")
+            .append("g")
+            .attr("class", "svg-tooltip")
+            .style("position", "absolute")
+            .style("visibility", "hidden");
+
+        // Show the bars
+        g.append("g")
+          .selectAll("#Q2_dataviz")
+          // Enter in the stack data = loop key per key = group per group
+          .data(stackedData)
+          .enter().append("g")
+          .attr("fill", function(d) { return stacked_color(d.key); })
+          .selectAll("rect")
+          // enter a second time = loop subgroup per subgroup to add all rectangles
+          .data(function(d) { return d; })
+          .enter().append("rect")
+            .attr("x", function(d) { return x(d.data.group); })
+            .attr("y", function(d) { return y(d[1]); })
+            .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+            .attr("width",x.bandwidth())
+          .on("mouseover", function(d) {
+                  // change the selection style
+                  d3.select(this)
+                      .attr('stroke-width', '2')
+                      .attr("stroke", "black");
+                  // make the tooltip visible and update its text
+                  tooltip
+                      .style("visibility", "visible")
+                      .text(Math.round(d[1]-d[0])+"%");
+              })
+          .on("mousemove", function() {
+                  tooltip
+                      .style("top", d3.event.pageY - 10 + "px")
+                      .style("left", d3.event.pageX + 10 + "px");
+                  })
+          .on("mouseout", function() {
+                  // change the selection style
+                  d3.select(this).attr('stroke-width', '0');
+
+                  tooltip.style("visibility", "hidden");
+                  });
+                  g.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            
+
+        g.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        g.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(y).ticks(null, "s"))
+            .append("text")
+            .attr("x", 19)
+            .attr("y", y(y.ticks().pop()) + 10)
+            .attr("dy", "0.32em")
+            .attr("fill", "#000")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "start")
+            .text("% of respondents");
+
+        var legend = g.append("g")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", 10)
+            .attr("text-anchor", "end")
+            .selectAll("g")
+            .data(subgroups.slice().reverse())
+            .enter().append("g")
+            .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+        legend.append("rect")
+            .attr("x", width + 105)
+            .attr("width", 19)
+            .attr("height", 19)
+            .attr("fill", stacked_color);
+
+        legend.append("text")
+            .attr("x", width + 94)
+            .attr("y", 9.5)
+            .attr("dy", "0.32em")
+            .text(function(d) { return d; });
+  
+    } 
+    // When the button is changed, run the updateChart function
+    d3.select("#selectButton").on("change", function(d) {
+      // recover the option that has been chosen
+      var selectedOption = d3.select(this).property("value");
+
+      // run the updateChart function with this selected option
+      console.log("$$$"+selectedOption)
+      update(selectedOption)
+    
+    }); 
+    d3.select("#button1").on("click", function(d) {
+      // recover the option that has been chosen
+      var selectedOption = 'Overall Inflation effect';
+
+      // run the updateChart function with this selected option
+      console.log("$$$"+selectedOption)
+      update(selectedOption)
+    
+    }); 
+    d3.select("#button2").on("click", function(d) {
+      // recover the option that has been chosen
+      var selectedOption = 'Rent default';
+
+      // run the updateChart function with this selected option
+      console.log("$$$"+selectedOption)
+      update(selectedOption)
+    
+    }); 
+    d3.select("#button3").on("click", function(d) {
+      // recover the option that has been chosen
+      var selectedOption = 'Bill default';
+
+      // run the updateChart function with this selected option
+      console.log("$$$"+selectedOption)
+      update(selectedOption)
+    
+    }); 
+    d3.select("#button4").on("click", function(d) {
+      // recover the option that has been chosen
+      var selectedOption = 'Credit default';
+
+      // run the updateChart function with this selected option
+      console.log("$$$"+selectedOption)
+      update(selectedOption)
+    
+    }); 
+    
+    
+
+  }) 
+    
+</script>
